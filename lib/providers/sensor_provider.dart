@@ -6,6 +6,8 @@ import '../core/sensors/accelerometer_processor.dart';
 import '../core/sensors/gyroscope_processor.dart';
 import '../core/sensors/sensor_stream_integrator.dart';
 import '../core/sensors/integrated_sensor_data.dart';
+import '../core/sensors/sensor_filtering_manager.dart';
+import '../core/sensors/sensor_data_filter.dart';
 
 /// 센서 상태를 관리하는 Provider
 class SensorProvider extends ChangeNotifier {
@@ -14,6 +16,7 @@ class SensorProvider extends ChangeNotifier {
   final AccelerometerProcessor _accelerometerProcessor = AccelerometerProcessor();
   final GyroscopeProcessor _gyroscopeProcessor = GyroscopeProcessor();
   final SensorStreamIntegrator _streamIntegrator = SensorStreamIntegrator();
+  final SensorFilteringManager _filteringManager = SensorFilteringManager();
   
   // 센서 상태
   bool _isInitialized = false;
@@ -40,6 +43,11 @@ class SensorProvider extends ChangeNotifier {
   String get streamIntegrationError => _streamIntegrator.errorMessage;
   List<IntegratedSensorData> get integratedDataHistory => _streamIntegrator.dataHistory;
   
+  // 필터링 상태
+  bool get isFilteringActive => _filteringManager.isActive;
+  String get filteringError => _filteringManager.errorMessage;
+  FilterSettings get filterSettings => _filteringManager.filterSettings;
+  
   // 권한 상태
   Map<Permission, PermissionStatus> _permissionStatuses = {};
 
@@ -59,6 +67,10 @@ class SensorProvider extends ChangeNotifier {
   Stream<SensorData>? get accelerometerStream => _sensorManager.accelerometerStream;
   Stream<SensorData>? get gyroscopeStream => _sensorManager.gyroscopeStream;
   Stream<IntegratedSensorData>? get integratedStream => _streamIntegrator.integratedStream;
+  
+  // 필터링된 센서 스트림 접근자
+  Stream<SensorData>? get filteredAccelerometerStream => _filteringManager.filteredAccelerometerStream;
+  Stream<SensorData>? get filteredGyroscopeStream => _filteringManager.filteredGyroscopeStream;
 
   /// 센서 시스템 초기화
   Future<bool> initialize() async {
@@ -81,6 +93,14 @@ class SensorProvider extends ChangeNotifier {
       
       if (!integrationInitialized) {
         _errorMessage = '센서 스트림 통합 초기화 실패.';
+        return false;
+      }
+      
+      // 필터링 관리자 초기화
+      final filteringInitialized = await _filteringManager.initialize();
+      
+      if (!filteringInitialized) {
+        _errorMessage = '센서 필터링 초기화 실패.';
         return false;
       }
       
@@ -137,8 +157,11 @@ class SensorProvider extends ChangeNotifier {
         // 센서 데이터 스트림 구독
         _subscribeToSensorStreams();
         
-        // 스트림 통합 시작
-        await _streamIntegrator.startIntegration(_sensorManager);
+            // 스트림 통합 시작
+            await _streamIntegrator.startIntegration(_sensorManager);
+            
+            // 필터링 시작
+            await _filteringManager.startFiltering(_sensorManager);
         
         debugPrint('센서 스트림 시작 완료');
         notifyListeners();
@@ -159,6 +182,7 @@ class SensorProvider extends ChangeNotifier {
     try {
       _sensorManager.stopAllSensors();
       _streamIntegrator.stopIntegration();
+      _filteringManager.stopFiltering();
       _isActive = false;
       _errorMessage = '';
       
@@ -221,10 +245,38 @@ class SensorProvider extends ChangeNotifier {
     await _permissionManager.openAppSettings();
   }
 
+  /// 필터 설정 업데이트
+  void updateFilterSettings(FilterSettings settings) {
+    _filteringManager.updateFilterSettings(settings);
+    notifyListeners();
+  }
+
+  /// 필터 성능 평가 가져오기
+  FilterPerformance getAccelerometerFilterPerformance() {
+    return _filteringManager.getAccelerometerPerformance();
+  }
+
+  /// 필터 성능 평가 가져오기
+  FilterPerformance getGyroscopeFilterPerformance() {
+    return _filteringManager.getGyroscopePerformance();
+  }
+
+  /// 필터 상태 정보 가져오기
+  Map<String, dynamic> getFilteringStatus() {
+    return _filteringManager.getFilteringStatus();
+  }
+
+  /// 필터 상태 초기화
+  void resetFilters() {
+    _filteringManager.resetFilters();
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _sensorManager.dispose();
     _streamIntegrator.dispose();
+    _filteringManager.dispose();
     super.dispose();
   }
 }

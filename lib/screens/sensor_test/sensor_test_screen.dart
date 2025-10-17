@@ -6,6 +6,9 @@ import '../../widgets/sensors/gyroscope_monitor.dart';
 import '../../widgets/sensors/integrated_sensor_monitor.dart';
 import '../../widgets/sensors/sensor_data_chart.dart';
 import '../../widgets/sensors/sensor_performance_stats.dart';
+import '../../widgets/sensors/filter_settings_widget.dart';
+import '../../widgets/sensors/filter_performance_monitor.dart';
+import '../../core/sensors/sensor_data_filter.dart';
 
 /// 센서 테스트 화면
 class SensorTestScreen extends StatefulWidget {
@@ -58,6 +61,16 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
                 
                 // 센서 모니터들
                 if (sensorProvider.isActive) ...[
+                  FilterSettingsWidget(
+                    initialSettings: const FilterSettings(),
+                    onSettingsChanged: _onFilterSettingsChanged,
+                  ),
+                  const SizedBox(height: 16),
+                  FilterPerformanceMonitor(
+                    accelerometerPerformance: sensorProvider.getAccelerometerFilterPerformance(),
+                    gyroscopePerformance: sensorProvider.getGyroscopeFilterPerformance(),
+                  ),
+                  const SizedBox(height: 16),
                   const SensorDataChart(),
                   const SizedBox(height: 16),
                   const SensorPerformanceStats(),
@@ -107,6 +120,8 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
             _buildStatusRow('자이로스코프 상태', status['gyroscopeStatus']),
             _buildStatusRow('스트림 통합', sensorProvider.isStreamIntegrationActive ? '활성' : '비활성'),
             _buildStatusRow('통합 데이터 수', sensorProvider.integratedDataHistory.length.toString()),
+            _buildStatusRow('필터링 활성', sensorProvider.isFilteringActive ? '활성' : '비활성'),
+            _buildStatusRow('필터 오류', sensorProvider.filteringError.isEmpty ? '없음' : '있음'),
             
             if (status['errorMessage'].isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -447,5 +462,12 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
         _logMessages.removeAt(0);
       }
     });
+  }
+
+  /// 필터 설정 변경 콜백
+  void _onFilterSettingsChanged(FilterSettings settings) {
+    final sensorProvider = Provider.of<SensorProvider>(context, listen: false);
+    sensorProvider.updateFilterSettings(settings);
+    _addLog('🔧 필터 설정 업데이트: ${settings.toString()}');
   }
 }
