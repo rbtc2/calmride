@@ -1,5 +1,5 @@
 name: calmride
-description: "A new Flutter project."
+description: "차량에서의 평화로운 디지털 경험 - 멀미 방지 앱"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -34,6 +34,21 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  
+  # State management
+  provider: ^6.1.1
+  
+  # Local storage
+  shared_preferences: ^2.2.2
+  
+  # Sensors for motion detection
+  sensors_plus: ^4.0.2
+  
+  # Navigation
+  go_router: ^14.2.7
+  
+  # Icons
+  flutter_svg: ^2.0.10+1
 
 dev_dependencies:
   flutter_test:
