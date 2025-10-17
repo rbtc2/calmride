@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
@@ -49,12 +49,12 @@ class HomeScreen extends StatelessWidget {
               
               const SizedBox(height: 24),
               
-              // 메인 토글 버튼
+              // 메인 토글 버튼 (중간에 배치)
               const StabilizationToggle(),
               
-              const SizedBox(height: 24),
+              const Spacer(),
               
-              // 현재 설정 정보
+              // 현재 설정 정보 (하단에 배치)
               const CurrentSettingsCard(),
               
               // 하단 여백 추가
