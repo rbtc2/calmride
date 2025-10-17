@@ -23,8 +23,8 @@ class StabilizationToggle extends StatelessWidget {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: 200,
-                height: 200,
+                width: 160,
+                height: 160,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: isActive 
@@ -50,10 +50,10 @@ class StabilizationToggle extends StatelessWidget {
                   children: [
                     Icon(
                       isActive ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                      size: 80,
+                      size: 60,
                       color: isActive ? Colors.white : Theme.of(context).colorScheme.primary,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       isActive ? '일시정지' : '시작',
                       style: AppTextStyles.titleMedium.copyWith(
