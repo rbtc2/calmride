@@ -21,10 +21,24 @@ class SensorTestScreen extends StatefulWidget {
   State<SensorTestScreen> createState() => _SensorTestScreenState();
 }
 
-class _SensorTestScreenState extends State<SensorTestScreen> {
+class _SensorTestScreenState extends State<SensorTestScreen> with TickerProviderStateMixin {
   bool _isLoggingEnabled = false;
   final List<String> _logMessages = [];
   static const int maxLogMessages = 50;
+  
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 5, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +46,17 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
       appBar: AppBar(
         title: const Text('센서 테스트'),
         centerTitle: true,
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: const [
+            Tab(icon: Icon(Icons.dashboard), text: '개요'),
+            Tab(icon: Icon(Icons.monitor), text: '모니터링'),
+            Tab(icon: Icon(Icons.show_chart), text: '차트'),
+            Tab(icon: Icon(Icons.settings), text: '설정'),
+            Tab(icon: Icon(Icons.list), text: '로그'),
+          ],
+        ),
         actions: [
           IconButton(
             icon: Icon(_isLoggingEnabled ? Icons.stop : Icons.play_arrow),
@@ -45,63 +70,151 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
           ),
         ],
       ),
-      body: Consumer<SensorProvider>(
-        builder: (context, sensorProvider, child) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 센서 상태 카드
-                _buildSensorStatusCard(sensorProvider),
-                
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // 개요 탭
+          _buildOverviewTab(),
+          // 모니터링 탭
+          _buildMonitoringTab(),
+          // 차트 탭
+          _buildChartsTab(),
+          // 설정 탭
+          _buildSettingsTab(),
+          // 로그 탭
+          _buildLogsTab(),
+        ],
+      ),
+    );
+  }
+
+  /// 개요 탭 - 센서 상태 및 제어
+  Widget _buildOverviewTab() {
+    return Consumer<SensorProvider>(
+      builder: (context, sensorProvider, child) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 센서 상태 카드
+              _buildSensorStatusCard(sensorProvider),
+              
+              const SizedBox(height: 16),
+              
+              // 센서 제어 버튼들
+              _buildControlButtons(sensorProvider),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 모니터링 탭 - 실시간 센서 데이터 모니터링
+  Widget _buildMonitoringTab() {
+    return Consumer<SensorProvider>(
+      builder: (context, sensorProvider, child) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (sensorProvider.isActive) ...[
+                const IntegratedSensorMonitor(),
                 const SizedBox(height: 16),
-                
-                // 센서 제어 버튼들
-                _buildControlButtons(sensorProvider),
-                
+                const AccelerometerMonitor(),
                 const SizedBox(height: 16),
-                
-                // 센서 모니터들
-                if (sensorProvider.isActive) ...[
-                  SensorOptimizationSettingsWidget(
-                    initialSettings: const SensorOptimizationSettings(),
-                    onSettingsChanged: _onOptimizationSettingsChanged,
+                const GyroscopeMonitor(),
+                const SizedBox(height: 16),
+              ] else ...[
+                const Center(
+                  child: Text(
+                    '센서를 시작한 후 모니터링 데이터를 확인할 수 있습니다.',
+                    style: TextStyle(color: Colors.grey),
                   ),
-                  const SizedBox(height: 16),
-                  SensorPerformanceMonitorWidget(
-                    optimizationManager: sensorProvider.optimizationManager,
-                    smartSensorManager: sensorProvider.smartSensorManager,
-                  ),
-                  const SizedBox(height: 16),
-                  FilterSettingsWidget(
-                    initialSettings: const FilterSettings(),
-                    onSettingsChanged: _onFilterSettingsChanged,
-                  ),
-                  const SizedBox(height: 16),
-                  FilterPerformanceMonitor(
-                    accelerometerPerformance: sensorProvider.getAccelerometerFilterPerformance(),
-                    gyroscopePerformance: sensorProvider.getGyroscopeFilterPerformance(),
-                  ),
-                  const SizedBox(height: 16),
-                  const SensorDataChart(),
-                  const SizedBox(height: 16),
-                  const SensorPerformanceStats(),
-                  const SizedBox(height: 16),
-                  const IntegratedSensorMonitor(),
-                  const SizedBox(height: 16),
-                  const AccelerometerMonitor(),
-                  const SizedBox(height: 16),
-                  const GyroscopeMonitor(),
-                  const SizedBox(height: 16),
-                ],
-                
-                // 실시간 로그
-                _buildLogSection(),
+                ),
               ],
-            ),
-          );
-        },
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 차트 탭 - 데이터 시각화 및 통계
+  Widget _buildChartsTab() {
+    return Consumer<SensorProvider>(
+      builder: (context, sensorProvider, child) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (sensorProvider.isActive) ...[
+                const SensorDataChart(),
+                const SizedBox(height: 16),
+                const SensorPerformanceStats(),
+                const SizedBox(height: 16),
+              ] else ...[
+                const Center(
+                  child: Text(
+                    '센서를 시작한 후 차트 및 통계를 확인할 수 있습니다.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 설정 탭 - 필터 및 최적화 설정
+  Widget _buildSettingsTab() {
+    return Consumer<SensorProvider>(
+      builder: (context, sensorProvider, child) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SensorOptimizationSettingsWidget(
+                initialSettings: const SensorOptimizationSettings(),
+                onSettingsChanged: _onOptimizationSettingsChanged,
+              ),
+              const SizedBox(height: 16),
+              SensorPerformanceMonitorWidget(
+                optimizationManager: sensorProvider.optimizationManager,
+                smartSensorManager: sensorProvider.smartSensorManager,
+              ),
+              const SizedBox(height: 16),
+              FilterSettingsWidget(
+                initialSettings: const FilterSettings(),
+                onSettingsChanged: _onFilterSettingsChanged,
+              ),
+              const SizedBox(height: 16),
+              FilterPerformanceMonitor(
+                accelerometerPerformance: sensorProvider.getAccelerometerFilterPerformance(),
+                gyroscopePerformance: sensorProvider.getGyroscopeFilterPerformance(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 로그 탭 - 실시간 로그 및 디버깅
+  Widget _buildLogsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLogSection(),
+        ],
       ),
     );
   }
