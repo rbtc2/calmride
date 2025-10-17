@@ -4,6 +4,8 @@ import '../core/sensors/sensor_manager.dart';
 import '../core/sensors/sensor_permission_manager.dart';
 import '../core/sensors/accelerometer_processor.dart';
 import '../core/sensors/gyroscope_processor.dart';
+import '../core/sensors/sensor_stream_integrator.dart';
+import '../core/sensors/integrated_sensor_data.dart';
 
 /// 센서 상태를 관리하는 Provider
 class SensorProvider extends ChangeNotifier {
@@ -11,6 +13,7 @@ class SensorProvider extends ChangeNotifier {
   final SensorPermissionManager _permissionManager = SensorPermissionManager();
   final AccelerometerProcessor _accelerometerProcessor = AccelerometerProcessor();
   final GyroscopeProcessor _gyroscopeProcessor = GyroscopeProcessor();
+  final SensorStreamIntegrator _streamIntegrator = SensorStreamIntegrator();
   
   // 센서 상태
   bool _isInitialized = false;
@@ -32,6 +35,11 @@ class SensorProvider extends ChangeNotifier {
   RotationDirection get currentRotationDirection => _gyroscopeProcessor.currentRotationDirection;
   VehicleRotationState get vehicleRotationState => _gyroscopeProcessor.getVehicleRotationState();
   
+  // 통합 센서 상태
+  bool get isStreamIntegrationActive => _streamIntegrator.isActive;
+  String get streamIntegrationError => _streamIntegrator.errorMessage;
+  List<IntegratedSensorData> get integratedDataHistory => _streamIntegrator.dataHistory;
+  
   // 권한 상태
   Map<Permission, PermissionStatus> _permissionStatuses = {};
 
@@ -50,6 +58,7 @@ class SensorProvider extends ChangeNotifier {
   // 센서 스트림 접근자
   Stream<SensorData>? get accelerometerStream => _sensorManager.accelerometerStream;
   Stream<SensorData>? get gyroscopeStream => _sensorManager.gyroscopeStream;
+  Stream<IntegratedSensorData>? get integratedStream => _streamIntegrator.integratedStream;
 
   /// 센서 시스템 초기화
   Future<bool> initialize() async {
@@ -64,6 +73,14 @@ class SensorProvider extends ChangeNotifier {
       
       if (!sensorInitialized) {
         _errorMessage = '센서를 사용할 수 없습니다.';
+        return false;
+      }
+      
+      // 스트림 통합 관리자 초기화
+      final integrationInitialized = await _streamIntegrator.initialize();
+      
+      if (!integrationInitialized) {
+        _errorMessage = '센서 스트림 통합 초기화 실패.';
         return false;
       }
       
@@ -120,6 +137,9 @@ class SensorProvider extends ChangeNotifier {
         // 센서 데이터 스트림 구독
         _subscribeToSensorStreams();
         
+        // 스트림 통합 시작
+        await _streamIntegrator.startIntegration(_sensorManager);
+        
         debugPrint('센서 스트림 시작 완료');
         notifyListeners();
         return true;
@@ -138,6 +158,7 @@ class SensorProvider extends ChangeNotifier {
   void stopSensors() {
     try {
       _sensorManager.stopAllSensors();
+      _streamIntegrator.stopIntegration();
       _isActive = false;
       _errorMessage = '';
       
@@ -203,6 +224,7 @@ class SensorProvider extends ChangeNotifier {
   @override
   void dispose() {
     _sensorManager.dispose();
+    _streamIntegrator.dispose();
     super.dispose();
   }
 }

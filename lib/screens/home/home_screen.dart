@@ -9,6 +9,7 @@ import '../../widgets/common/stabilization_toggle.dart';
 import '../../widgets/common/status_indicator.dart';
 import '../../widgets/sensors/accelerometer_monitor.dart';
 import '../../widgets/sensors/gyroscope_monitor.dart';
+import '../../widgets/sensors/integrated_sensor_monitor.dart';
 
 /// 메인 홈 화면
 class HomeScreen extends StatelessWidget {
@@ -58,6 +59,8 @@ class HomeScreen extends StatelessWidget {
                   if (sensorProvider.isActive) {
                     return Column(
                       children: [
+                        const IntegratedSensorMonitor(),
+                        const SizedBox(height: 16),
                         const AccelerometerMonitor(),
                         const SizedBox(height: 16),
                         const GyroscopeMonitor(),
