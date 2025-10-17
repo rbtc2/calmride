@@ -8,7 +8,10 @@ import '../../widgets/sensors/sensor_data_chart.dart';
 import '../../widgets/sensors/sensor_performance_stats.dart';
 import '../../widgets/sensors/filter_settings_widget.dart';
 import '../../widgets/sensors/filter_performance_monitor.dart';
+import '../../widgets/sensors/sensor_optimization_settings_widget.dart';
+import '../../widgets/sensors/sensor_performance_monitor_widget.dart';
 import '../../core/sensors/sensor_data_filter.dart';
+import '../../core/sensors/sensor_optimization_manager.dart';
 
 /// 센서 테스트 화면
 class SensorTestScreen extends StatefulWidget {
@@ -61,6 +64,16 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
                 
                 // 센서 모니터들
                 if (sensorProvider.isActive) ...[
+                  SensorOptimizationSettingsWidget(
+                    initialSettings: const SensorOptimizationSettings(),
+                    onSettingsChanged: _onOptimizationSettingsChanged,
+                  ),
+                  const SizedBox(height: 16),
+                  SensorPerformanceMonitorWidget(
+                    optimizationManager: sensorProvider.optimizationManager,
+                    smartSensorManager: sensorProvider.smartSensorManager,
+                  ),
+                  const SizedBox(height: 16),
                   FilterSettingsWidget(
                     initialSettings: const FilterSettings(),
                     onSettingsChanged: _onFilterSettingsChanged,
@@ -122,6 +135,8 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
             _buildStatusRow('통합 데이터 수', sensorProvider.integratedDataHistory.length.toString()),
             _buildStatusRow('필터링 활성', sensorProvider.isFilteringActive ? '활성' : '비활성'),
             _buildStatusRow('필터 오류', sensorProvider.filteringError.isEmpty ? '없음' : '있음'),
+            _buildStatusRow('최적화 활성', sensorProvider.isOptimizationActive ? '활성' : '비활성'),
+            _buildStatusRow('스마트 모드', sensorProvider.isSmartModeEnabled ? '활성' : '비활성'),
             
             if (status['errorMessage'].isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -469,5 +484,12 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
     final sensorProvider = Provider.of<SensorProvider>(context, listen: false);
     sensorProvider.updateFilterSettings(settings);
     _addLog('🔧 필터 설정 업데이트: ${settings.toString()}');
+  }
+
+  /// 최적화 설정 변경 콜백
+  void _onOptimizationSettingsChanged(SensorOptimizationSettings settings) {
+    final sensorProvider = Provider.of<SensorProvider>(context, listen: false);
+    sensorProvider.updateOptimizationSettings(settings);
+    _addLog('⚡ 최적화 설정 업데이트: ${settings.toString()}');
   }
 }

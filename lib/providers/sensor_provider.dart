@@ -8,6 +8,8 @@ import '../core/sensors/sensor_stream_integrator.dart';
 import '../core/sensors/integrated_sensor_data.dart';
 import '../core/sensors/sensor_filtering_manager.dart';
 import '../core/sensors/sensor_data_filter.dart';
+import '../core/sensors/sensor_optimization_manager.dart';
+import '../core/sensors/smart_sensor_manager.dart';
 
 /// 센서 상태를 관리하는 Provider
 class SensorProvider extends ChangeNotifier {
@@ -17,6 +19,8 @@ class SensorProvider extends ChangeNotifier {
   final GyroscopeProcessor _gyroscopeProcessor = GyroscopeProcessor();
   final SensorStreamIntegrator _streamIntegrator = SensorStreamIntegrator();
   final SensorFilteringManager _filteringManager = SensorFilteringManager();
+  final SensorOptimizationManager _optimizationManager = SensorOptimizationManager();
+  late final SmartSensorManager _smartSensorManager;
   
   // 센서 상태
   bool _isInitialized = false;
@@ -48,6 +52,11 @@ class SensorProvider extends ChangeNotifier {
   String get filteringError => _filteringManager.errorMessage;
   FilterSettings get filterSettings => _filteringManager.filterSettings;
   
+  // 최적화 상태
+  bool get isOptimizationActive => _optimizationManager.isActive;
+  SensorOptimizationSettings get optimizationSettings => _optimizationManager.settings;
+  bool get isSmartModeEnabled => _smartSensorManager.isSmartModeEnabled;
+  
   // 권한 상태
   Map<Permission, PermissionStatus> _permissionStatuses = {};
 
@@ -71,6 +80,10 @@ class SensorProvider extends ChangeNotifier {
   // 필터링된 센서 스트림 접근자
   Stream<SensorData>? get filteredAccelerometerStream => _filteringManager.filteredAccelerometerStream;
   Stream<SensorData>? get filteredGyroscopeStream => _filteringManager.filteredGyroscopeStream;
+  
+  // 스마트 센서 스트림 접근자
+  Stream<SensorData>? get smartAccelerometerStream => _smartSensorManager.smartAccelerometerStream;
+  Stream<SensorData>? get smartGyroscopeStream => _smartSensorManager.smartGyroscopeStream;
 
   /// 센서 시스템 초기화
   Future<bool> initialize() async {
@@ -101,6 +114,27 @@ class SensorProvider extends ChangeNotifier {
       
       if (!filteringInitialized) {
         _errorMessage = '센서 필터링 초기화 실패.';
+        return false;
+      }
+      
+      // 최적화 관리자 초기화
+      final optimizationInitialized = await _optimizationManager.initialize();
+      
+      if (!optimizationInitialized) {
+        _errorMessage = '센서 최적화 초기화 실패.';
+        return false;
+      }
+      
+      // 스마트 센서 매니저 초기화
+      _smartSensorManager = SmartSensorManager(
+        sensorManager: _sensorManager,
+        optimizationManager: _optimizationManager,
+      );
+      
+      final smartInitialized = await _smartSensorManager.initialize();
+      
+      if (!smartInitialized) {
+        _errorMessage = '스마트 센서 초기화 실패.';
         return false;
       }
       
@@ -162,6 +196,9 @@ class SensorProvider extends ChangeNotifier {
             
             // 필터링 시작
             await _filteringManager.startFiltering(_sensorManager);
+            
+            // 스마트 센서 시작
+            await _smartSensorManager.startSmartSensors();
         
         debugPrint('센서 스트림 시작 완료');
         notifyListeners();
@@ -183,6 +220,7 @@ class SensorProvider extends ChangeNotifier {
       _sensorManager.stopAllSensors();
       _streamIntegrator.stopIntegration();
       _filteringManager.stopFiltering();
+      _smartSensorManager.stopSmartSensors();
       _isActive = false;
       _errorMessage = '';
       
@@ -272,11 +310,46 @@ class SensorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 최적화 설정 업데이트
+  void updateOptimizationSettings(SensorOptimizationSettings settings) {
+    _optimizationManager.updateSettings(settings);
+    notifyListeners();
+  }
+
+  /// 스마트 모드 토글
+  void toggleSmartMode() {
+    _smartSensorManager.toggleSmartMode();
+    notifyListeners();
+  }
+
+  /// 성능 리포트 가져오기
+  Map<String, dynamic> getPerformanceReport() {
+    return _optimizationManager.generatePerformanceReport();
+  }
+
+  /// 배터리 효율성 통계 가져오기
+  Map<String, dynamic> getBatteryEfficiencyStats() {
+    return _smartSensorManager.getBatteryEfficiencyStats();
+  }
+
+  /// 최적화 제안 가져오기
+  List<String> getOptimizationSuggestions() {
+    return _smartSensorManager.getOptimizationSuggestions();
+  }
+
+  /// 최적화 매니저 접근자
+  SensorOptimizationManager get optimizationManager => _optimizationManager;
+  
+  /// 스마트 센서 매니저 접근자
+  SmartSensorManager get smartSensorManager => _smartSensorManager;
+
   @override
   void dispose() {
     _sensorManager.dispose();
     _streamIntegrator.dispose();
     _filteringManager.dispose();
+    _optimizationManager.dispose();
+    _smartSensorManager.dispose();
     super.dispose();
   }
 }
