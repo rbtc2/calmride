@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import '../../providers/sensor_provider.dart';
 import '../../widgets/sensors/accelerometer_monitor.dart';
 import '../../widgets/sensors/gyroscope_monitor.dart';
+import '../../widgets/sensors/integrated_sensor_monitor.dart';
+import '../../widgets/sensors/sensor_data_chart.dart';
+import '../../widgets/sensors/sensor_performance_stats.dart';
 
 /// 센서 테스트 화면
 class SensorTestScreen extends StatefulWidget {
@@ -55,6 +58,12 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
                 
                 // 센서 모니터들
                 if (sensorProvider.isActive) ...[
+                  const SensorDataChart(),
+                  const SizedBox(height: 16),
+                  const SensorPerformanceStats(),
+                  const SizedBox(height: 16),
+                  const IntegratedSensorMonitor(),
+                  const SizedBox(height: 16),
                   const AccelerometerMonitor(),
                   const SizedBox(height: 16),
                   const GyroscopeMonitor(),
@@ -96,6 +105,8 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
             _buildStatusRow('권한 허용', status['arePermissionsGranted'] ? '허용' : '거부'),
             _buildStatusRow('가속도계 상태', status['accelerometerStatus']),
             _buildStatusRow('자이로스코프 상태', status['gyroscopeStatus']),
+            _buildStatusRow('스트림 통합', sensorProvider.isStreamIntegrationActive ? '활성' : '비활성'),
+            _buildStatusRow('통합 데이터 수', sensorProvider.integratedDataHistory.length.toString()),
             
             if (status['errorMessage'].isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -389,6 +400,15 @@ class _SensorTestScreenState extends State<SensorTestScreen> {
       (data) {
         if (_isLoggingEnabled) {
           _addLog('🔄 자이로스코프: X=${data.x.toStringAsFixed(3)}, Y=${data.y.toStringAsFixed(3)}, Z=${data.z.toStringAsFixed(3)}');
+        }
+      },
+    );
+
+    // 통합 센서 데이터 구독
+    sensorProvider.integratedStream?.listen(
+      (data) {
+        if (_isLoggingEnabled) {
+          _addLog('🔗 통합센서: 강도=${(data.combinedMotionIntensity * 100).round()}%, 상태=${data.motionState.displayName}, 품질=${data.motionQuality.displayName}');
         }
       },
     );
