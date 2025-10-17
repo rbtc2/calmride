@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/app_settings_provider.dart';
 import 'providers/stabilization_provider.dart';
+import 'providers/sensor_provider.dart';
 import 'models/app_enums.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/settings/settings_screen.dart';
@@ -33,6 +34,7 @@ class CalmRideApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider.value(value: appSettingsProvider),
         ChangeNotifierProvider(create: (_) => StabilizationProvider()),
+        ChangeNotifierProvider(create: (_) => SensorProvider()),
       ],
       child: Consumer<AppSettingsProvider>(
         builder: (context, settingsProvider, child) {
