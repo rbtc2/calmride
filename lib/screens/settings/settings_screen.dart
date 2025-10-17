@@ -7,6 +7,7 @@ import '../../models/app_enums.dart';
 import '../../models/app_models.dart';
 import '../../widgets/common/setting_tile.dart';
 import '../../widgets/common/setting_section.dart';
+import '../sensor_test/sensor_test_screen.dart';
 
 /// 설정 화면
 class SettingsScreen extends StatelessWidget {
@@ -61,6 +62,16 @@ class SettingsScreen extends StatelessWidget {
                   }
                   return const SizedBox.shrink();
                 },
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // 개발자 도구
+              const SettingSection(
+                title: '개발자 도구',
+                children: [
+                  SensorTestTile(),
+                ],
               ),
               
               const SizedBox(height: 24),
@@ -769,6 +780,27 @@ class ResetSettingsTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 센서 테스트 타일
+class SensorTestTile extends StatelessWidget {
+  const SensorTestTile({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingTile(
+      title: '센서 테스트',
+      subtitle: '센서 데이터 및 상태 확인',
+      leading: const Icon(Icons.sensors),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const SensorTestScreen(),
+          ),
+        );
+      },
     );
   }
 }

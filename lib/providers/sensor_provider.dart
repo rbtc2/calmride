@@ -3,12 +3,14 @@ import 'package:permission_handler/permission_handler.dart';
 import '../core/sensors/sensor_manager.dart';
 import '../core/sensors/sensor_permission_manager.dart';
 import '../core/sensors/accelerometer_processor.dart';
+import '../core/sensors/gyroscope_processor.dart';
 
 /// 센서 상태를 관리하는 Provider
 class SensorProvider extends ChangeNotifier {
   final SensorManager _sensorManager = SensorManager();
   final SensorPermissionManager _permissionManager = SensorPermissionManager();
   final AccelerometerProcessor _accelerometerProcessor = AccelerometerProcessor();
+  final GyroscopeProcessor _gyroscopeProcessor = GyroscopeProcessor();
   
   // 센서 상태
   bool _isInitialized = false;
@@ -23,6 +25,12 @@ class SensorProvider extends ChangeNotifier {
   bool get isAccelerometerMoving => _accelerometerProcessor.isMoving;
   double get accelerometerMovementIntensity => _accelerometerProcessor.movementIntensity;
   VehicleMovementDirection get vehicleMovementDirection => _accelerometerProcessor.getVehicleMovementDirection();
+  
+  // 자이로스코프 처리 상태
+  bool get isGyroscopeRotating => _gyroscopeProcessor.isRotating;
+  double get gyroscopeRotationIntensity => _gyroscopeProcessor.rotationIntensity;
+  RotationDirection get currentRotationDirection => _gyroscopeProcessor.currentRotationDirection;
+  VehicleRotationState get vehicleRotationState => _gyroscopeProcessor.getVehicleRotationState();
   
   // 권한 상태
   Map<Permission, PermissionStatus> _permissionStatuses = {};
@@ -161,6 +169,7 @@ class SensorProvider extends ChangeNotifier {
     _sensorManager.gyroscopeStream?.listen(
       (data) {
         _lastGyroscopeData = data;
+        _gyroscopeProcessor.processGyroscopeData(data);
         notifyListeners();
       },
       onError: (error) {

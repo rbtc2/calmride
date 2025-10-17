@@ -8,6 +8,7 @@ import '../../providers/sensor_provider.dart';
 import '../../widgets/common/stabilization_toggle.dart';
 import '../../widgets/common/status_indicator.dart';
 import '../../widgets/sensors/accelerometer_monitor.dart';
+import '../../widgets/sensors/gyroscope_monitor.dart';
 
 /// 메인 홈 화면
 class HomeScreen extends StatelessWidget {
@@ -51,11 +52,17 @@ class HomeScreen extends StatelessWidget {
               
               const SizedBox(height: 16),
               
-              // 가속도계 모니터 (센서가 활성화된 경우만 표시)
+              // 센서 모니터들 (센서가 활성화된 경우만 표시)
               Consumer<SensorProvider>(
                 builder: (context, sensorProvider, child) {
                   if (sensorProvider.isActive) {
-                    return const AccelerometerMonitor();
+                    return Column(
+                      children: [
+                        const AccelerometerMonitor(),
+                        const SizedBox(height: 16),
+                        const GyroscopeMonitor(),
+                      ],
+                    );
                   }
                   return const SizedBox.shrink();
                 },
