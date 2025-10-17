@@ -4,8 +4,10 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/stabilization_provider.dart';
 import '../../providers/app_settings_provider.dart';
+import '../../providers/sensor_provider.dart';
 import '../../widgets/common/stabilization_toggle.dart';
 import '../../widgets/common/status_indicator.dart';
+import '../../widgets/sensors/accelerometer_monitor.dart';
 
 /// 메인 홈 화면
 class HomeScreen extends StatelessWidget {
@@ -46,6 +48,18 @@ class HomeScreen extends StatelessWidget {
             children: [
               // 상태 표시기
               const StatusIndicator(),
+              
+              const SizedBox(height: 16),
+              
+              // 가속도계 모니터 (센서가 활성화된 경우만 표시)
+              Consumer<SensorProvider>(
+                builder: (context, sensorProvider, child) {
+                  if (sensorProvider.isActive) {
+                    return const AccelerometerMonitor();
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
               
               const SizedBox(height: 24),
               

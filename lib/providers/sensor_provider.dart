@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../core/sensors/sensor_manager.dart';
 import '../core/sensors/sensor_permission_manager.dart';
+import '../core/sensors/accelerometer_processor.dart';
 
 /// 센서 상태를 관리하는 Provider
 class SensorProvider extends ChangeNotifier {
   final SensorManager _sensorManager = SensorManager();
   final SensorPermissionManager _permissionManager = SensorPermissionManager();
+  final AccelerometerProcessor _accelerometerProcessor = AccelerometerProcessor();
   
   // 센서 상태
   bool _isInitialized = false;
@@ -16,6 +18,11 @@ class SensorProvider extends ChangeNotifier {
   // 센서 데이터
   SensorData? _lastAccelerometerData;
   SensorData? _lastGyroscopeData;
+  
+  // 가속도계 처리 상태
+  bool get isAccelerometerMoving => _accelerometerProcessor.isMoving;
+  double get accelerometerMovementIntensity => _accelerometerProcessor.movementIntensity;
+  VehicleMovementDirection get vehicleMovementDirection => _accelerometerProcessor.getVehicleMovementDirection();
   
   // 권한 상태
   Map<Permission, PermissionStatus> _permissionStatuses = {};
@@ -31,6 +38,10 @@ class SensorProvider extends ChangeNotifier {
   bool get areSensorsAvailable => _sensorManager.areSensorsAvailable;
   bool get arePermissionsGranted => _permissionStatuses.values.every((status) => 
     status == PermissionStatus.granted || status == PermissionStatus.limited);
+
+  // 센서 스트림 접근자
+  Stream<SensorData>? get accelerometerStream => _sensorManager.accelerometerStream;
+  Stream<SensorData>? get gyroscopeStream => _sensorManager.gyroscopeStream;
 
   /// 센서 시스템 초기화
   Future<bool> initialize() async {
@@ -136,6 +147,7 @@ class SensorProvider extends ChangeNotifier {
     _sensorManager.accelerometerStream?.listen(
       (data) {
         _lastAccelerometerData = data;
+        _accelerometerProcessor.processAccelerometerData(data);
         notifyListeners();
       },
       onError: (error) {
