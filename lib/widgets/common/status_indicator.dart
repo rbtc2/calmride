@@ -12,9 +12,7 @@ class StatusIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<StabilizationProvider>(
       builder: (context, stabilizationProvider, child) {
-        final isActive = stabilizationProvider.isActive;
         final appState = stabilizationProvider.appState;
-        final mode = stabilizationProvider.currentMode;
         
         return Card(
           child: Padding(
@@ -51,16 +49,6 @@ class StatusIndicator extends StatelessWidget {
                   ],
                 ),
                 
-                const SizedBox(height: 8),
-                
-                // 현재 모드 표시
-                if (isActive)
-                  Text(
-                    '${mode.displayName} 모드 활성화',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
-                  ),
               ],
             ),
           ),
