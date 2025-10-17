@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/sensor_provider.dart';
-import '../../widgets/sensors/accelerometer_monitor.dart';
-import '../../widgets/sensors/gyroscope_monitor.dart';
-import '../../widgets/sensors/integrated_sensor_monitor.dart';
+import '../../widgets/sensors/optimized_integrated_sensor_monitor.dart';
+import '../../widgets/sensors/optimized_accelerometer_monitor.dart';
+import '../../widgets/sensors/optimized_gyroscope_monitor.dart';
 import '../../widgets/sensors/sensor_data_chart.dart';
 import '../../widgets/sensors/sensor_performance_stats.dart';
 import '../../widgets/sensors/filter_settings_widget.dart';
@@ -111,7 +111,7 @@ class _SensorTestScreenState extends State<SensorTestScreen> with TickerProvider
     );
   }
 
-  /// 모니터링 탭 - 실시간 센서 데이터 모니터링
+  /// 모니터링 탭 - 실시간 센서 데이터 모니터링 (지연 로딩 적용)
   Widget _buildMonitoringTab() {
     return Consumer<SensorProvider>(
       builder: (context, sensorProvider, child) {
@@ -121,12 +121,22 @@ class _SensorTestScreenState extends State<SensorTestScreen> with TickerProvider
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (sensorProvider.isActive) ...[
-                const IntegratedSensorMonitor(),
-                const SizedBox(height: 16),
-                const AccelerometerMonitor(),
-                const SizedBox(height: 16),
-                const GyroscopeMonitor(),
-                const SizedBox(height: 16),
+                // 지연 로딩을 위한 IndexedStack 사용
+                IndexedStack(
+                  index: _tabController.index == 1 ? 0 : -1, // 모니터링 탭이 활성화된 경우에만 렌더링
+                  children: [
+                    Column(
+                      children: [
+                        const OptimizedIntegratedSensorMonitor(),
+                        const SizedBox(height: 16),
+                        const OptimizedAccelerometerMonitor(),
+                        const SizedBox(height: 16),
+                        const OptimizedGyroscopeMonitor(),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ],
+                ),
               ] else ...[
                 const Center(
                   child: Text(

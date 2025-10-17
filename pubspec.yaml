@@ -52,6 +52,9 @@ dependencies:
   
   # Permissions
   permission_handler: ^11.3.1
+  
+  # Visibility detection for performance optimization
+  visibility_detector: ^0.4.0+2
 
 dev_dependencies:
   flutter_test:
