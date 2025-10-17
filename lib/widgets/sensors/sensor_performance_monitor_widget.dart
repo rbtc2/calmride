@@ -6,7 +6,7 @@ import '../../core/sensors/smart_sensor_manager.dart';
 /// 센서 성능 모니터 위젯
 class SensorPerformanceMonitorWidget extends StatefulWidget {
   final SensorOptimizationManager optimizationManager;
-  final SmartSensorManager smartSensorManager;
+  final SmartSensorManager? smartSensorManager;
 
   const SensorPerformanceMonitorWidget({
     super.key,
@@ -48,7 +48,7 @@ class _SensorPerformanceMonitorWidgetState extends State<SensorPerformanceMonito
     
     setState(() {
       _performanceData = widget.optimizationManager.generatePerformanceReport();
-      _optimizationSuggestions = widget.smartSensorManager.getOptimizationSuggestions();
+      _optimizationSuggestions = widget.smartSensorManager?.getOptimizationSuggestions() ?? [];
     });
   }
 

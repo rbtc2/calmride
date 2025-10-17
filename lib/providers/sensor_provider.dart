@@ -20,7 +20,7 @@ class SensorProvider extends ChangeNotifier {
   final SensorStreamIntegrator _streamIntegrator = SensorStreamIntegrator();
   final SensorFilteringManager _filteringManager = SensorFilteringManager();
   final SensorOptimizationManager _optimizationManager = SensorOptimizationManager();
-  late final SmartSensorManager _smartSensorManager;
+  SmartSensorManager? _smartSensorManager;
   
   // 센서 상태
   bool _isInitialized = false;
@@ -55,7 +55,7 @@ class SensorProvider extends ChangeNotifier {
   // 최적화 상태
   bool get isOptimizationActive => _optimizationManager.isActive;
   SensorOptimizationSettings get optimizationSettings => _optimizationManager.settings;
-  bool get isSmartModeEnabled => _smartSensorManager.isSmartModeEnabled;
+  bool get isSmartModeEnabled => _smartSensorManager?.isSmartModeEnabled ?? false;
   
   // 권한 상태
   Map<Permission, PermissionStatus> _permissionStatuses = {};
@@ -82,8 +82,8 @@ class SensorProvider extends ChangeNotifier {
   Stream<SensorData>? get filteredGyroscopeStream => _filteringManager.filteredGyroscopeStream;
   
   // 스마트 센서 스트림 접근자
-  Stream<SensorData>? get smartAccelerometerStream => _smartSensorManager.smartAccelerometerStream;
-  Stream<SensorData>? get smartGyroscopeStream => _smartSensorManager.smartGyroscopeStream;
+  Stream<SensorData>? get smartAccelerometerStream => _smartSensorManager?.smartAccelerometerStream;
+  Stream<SensorData>? get smartGyroscopeStream => _smartSensorManager?.smartGyroscopeStream;
 
   /// 센서 시스템 초기화
   Future<bool> initialize() async {
@@ -131,7 +131,7 @@ class SensorProvider extends ChangeNotifier {
         optimizationManager: _optimizationManager,
       );
       
-      final smartInitialized = await _smartSensorManager.initialize();
+      final smartInitialized = await _smartSensorManager!.initialize();
       
       if (!smartInitialized) {
         _errorMessage = '스마트 센서 초기화 실패.';
@@ -198,7 +198,7 @@ class SensorProvider extends ChangeNotifier {
             await _filteringManager.startFiltering(_sensorManager);
             
             // 스마트 센서 시작
-            await _smartSensorManager.startSmartSensors();
+            await _smartSensorManager?.startSmartSensors();
         
         debugPrint('센서 스트림 시작 완료');
         notifyListeners();
@@ -220,7 +220,7 @@ class SensorProvider extends ChangeNotifier {
       _sensorManager.stopAllSensors();
       _streamIntegrator.stopIntegration();
       _filteringManager.stopFiltering();
-      _smartSensorManager.stopSmartSensors();
+      _smartSensorManager?.stopSmartSensors();
       _isActive = false;
       _errorMessage = '';
       
@@ -318,7 +318,7 @@ class SensorProvider extends ChangeNotifier {
 
   /// 스마트 모드 토글
   void toggleSmartMode() {
-    _smartSensorManager.toggleSmartMode();
+    _smartSensorManager?.toggleSmartMode();
     notifyListeners();
   }
 
@@ -329,19 +329,19 @@ class SensorProvider extends ChangeNotifier {
 
   /// 배터리 효율성 통계 가져오기
   Map<String, dynamic> getBatteryEfficiencyStats() {
-    return _smartSensorManager.getBatteryEfficiencyStats();
+    return _smartSensorManager?.getBatteryEfficiencyStats() ?? {};
   }
 
   /// 최적화 제안 가져오기
   List<String> getOptimizationSuggestions() {
-    return _smartSensorManager.getOptimizationSuggestions();
+    return _smartSensorManager?.getOptimizationSuggestions() ?? [];
   }
 
   /// 최적화 매니저 접근자
   SensorOptimizationManager get optimizationManager => _optimizationManager;
   
   /// 스마트 센서 매니저 접근자
-  SmartSensorManager get smartSensorManager => _smartSensorManager;
+  SmartSensorManager? get smartSensorManager => _smartSensorManager;
 
   @override
   void dispose() {
@@ -349,7 +349,7 @@ class SensorProvider extends ChangeNotifier {
     _streamIntegrator.dispose();
     _filteringManager.dispose();
     _optimizationManager.dispose();
-    _smartSensorManager.dispose();
+    _smartSensorManager?.dispose();
     super.dispose();
   }
 }
